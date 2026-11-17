@@ -46,30 +46,44 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Clean and Build Debug APK
+      - name: Clean and Build Debug & Release APK
         working-directory: ${{ env.PROJ_DIR }}
         run: |
           if [ -f gradlew ]; then
             chmod +x gradlew
-            # Kita bersihkan sisa cache dulu, baru build
-            ./gradlew clean assembleDebug
+            # Build dua-duanya sekaligus (Debug dan Release)
+            ./gradlew clean assembleDebug assembleRelease
           else
-            gradle clean assembleDebug
+            gradle clean assembleDebug assembleRelease
           fi
 
-      - name: Find APK
-        id: find_apk
+      - name: Find and Rename APKs
         run: |
-          APK_PATH=$(find ${{ env.PROJ_DIR }} -path "*/build/outputs/apk/debug/*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then echo "APK gagal dibuat."; exit 1; fi
-          echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
+          # Cari APK Debug
+          DEBUG_APK=$(find ${{ env.PROJ_DIR }} -path "*/build/outputs/apk/debug/*.apk" | head -n 1)
+          if [ -n "$DEBUG_APK" ]; then 
+            cp "$DEBUG_APK" "./AlfyCleaner-Debug.apk"
+          fi
 
-      - name: Create Release and Upload APK
+          # Cari APK Release
+          RELEASE_APK=$(find ${{ env.PROJ_DIR }} -path "*/build/outputs/apk/release/*.apk" | head -n 1)
+          if [ -n "$RELEASE_APK" ]; then 
+            cp "$RELEASE_APK" "./AlfyCleaner-Release.apk"
+          fi
+
+          if [ ! -f "./AlfyCleaner-Debug.apk" ] && [ ! -f "./AlfyCleaner-Release.apk" ]; then 
+            echo "Kedua APK gagal dibuat!"; exit 1; 
+          fi
+
+      - name: Create Release and Upload APKs
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "build-${{ github.run_number }}"
           name: "APK Build ${{ github.run_number }}"
-          files: ${{ env.APK_PATH }}
+          # Ini akan mengunggah dua file yang sudah kita rename tadi
+          files: |
+            ./AlfyCleaner-Debug.apk
+            ./AlfyCleaner-Release.apk
           draft: false
           prerelease: false
         env:
