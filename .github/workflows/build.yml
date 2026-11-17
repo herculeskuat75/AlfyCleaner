@@ -13,28 +13,24 @@ jobs:
 
     steps:
     - name: 1. Checkout Repository
-      uses: actions/checkout@v7
+      uses: actions/checkout@v4
 
     - name: 2. Set up JDK 21
-      uses: actions/setup-java@v6
+      uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: gradle
 
-    - name: 3. Grant Execute Permission for gradlew
-      run: chmod +x gradlew
-
-    - name: 4. Setup Gradle
-      uses: gradle/actions/setup-gradle@v4
+    - name: 3. Setup Gradle (Tanpa Wrapper)
+      uses: gradle/actions/setup-gradle@v3
       with:
-        gradle-version: wrapper
+        gradle-version: '8.5' # Menggunakan Gradle 8.5 agar kompatibel
 
-    - name: 5. Build Debug APK
-      run: ./gradlew assembleDebug
+    - name: 4. Build Debug APK
+      run: gradle assembleDebug
 
-    - name: 6. Upload APK Artifact
-      uses: actions/upload-artifact@v7
+    - name: 5. Upload APK Artifact
+      uses: actions/upload-artifact@v4
       with:
         name: AlfyCleaner-Debug-APK
         path: app/build/outputs/apk/debug/*.apk
